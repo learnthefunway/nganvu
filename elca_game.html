@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELCA L&D Passport</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#E8371B;--teal:#00A89D;--yellow:#F5C842;--blue:#5BC4D8;--dark:#2D2D2D;--gray:#F5F5F3;--border:#E0E0DC;--text:#1A1A1A;--muted:#888}
+body{font-family:'Montserrat',sans-serif;background:#FAFAF8;color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.container{width:100%;max-width:680px;background:white;border:0.5px solid var(--border);border-radius:16px;overflow:hidden;position:relative}
+.top-bar,.bottom-bar{height:4px;display:flex}
+.top-bar div,.bottom-bar div{flex:1}
+.tb1{background:var(--red)}.tb2{background:var(--teal)}.tb3{background:var(--yellow)}.tb4{background:var(--blue)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:0.5px solid var(--border)}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-sq{width:20px;height:20px;background:var(--red);border-radius:3px}
+.logo-text{font-size:16px;font-weight:700;color:var(--dark);letter-spacing:.04em}
+.stamps{display:flex;gap:8px;align-items:center}
+.stamp{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--muted);transition:all .3s ease}
+.stamp.done{border-color:var(--red);background:#FEF0ED;color:var(--red)}
+.stamp.active{border-color:var(--teal);background:#E6F7F6;color:var(--teal)}
+.stamp svg{width:16px;height:16px}
+.content{padding:1.5rem}
+.passport-progress{background:var(--gray);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem}
+.progress-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px}
+.progress-dots{display:flex;gap:6px}
+.progress-dot{flex:1;height:5px;border-radius:3px;background:var(--border);transition:background .4s ease}
+.progress-dot.done{background:var(--red)}
+.progress-dot.active{background:var(--teal)}
+.round-tag{font-size:10px;font-weight:700;color:var(--red);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.question{font-size:19px;font-weight:700;color:var(--dark);line-height:1.4;margin-bottom:1.5rem}
+.options{display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem}
+.option{padding:13px 16px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);background:white;display:flex;align-items:center;gap:12px;transition:all .15s ease;user-select:none}
+.option:hover{border-color:#ccc;background:var(--gray)}
+.option.selected{border-color:var(--teal);background:#E6F7F6;color:#085041}
+.option.correct{border-color:var(--teal);background:#E6F7F6;color:#085041}
+.option.wrong{border-color:var(--red);background:#FEF0ED;color:#993C1D}
+.option-key{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--muted)}
+.option.selected .option-key{border-color:var(--teal);color:var(--teal)}
+.option.correct .option-key{border-color:var(--teal);color:var(--teal);background:#C0EDE9}
+.option.wrong .option-key{border-color:var(--red);color:var(--red);background:#FDDDD8}
+
+/* ROUND 2 - all 6 displayed at once */
+.yn-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem}
+.yn-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:10px;gap:12px;transition:all .2s}
+.yn-row-name{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.yn-row-btns{display:flex;gap:6px;flex-shrink:0}
+.yn-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--muted);transition:all .15s;font-family:'Montserrat',sans-serif}
+.yn-pill.yes-pill:hover{border-color:var(--teal);color:var(--teal);background:#E6F7F6}
+.yn-pill.no-pill:hover{border-color:var(--red);color:var(--red);background:#FEF0ED}
+.yn-pill.sel-yes{border-color:var(--teal);color:var(--teal);background:#E6F7F6}
+.yn-pill.sel-no{border-color:var(--red);color:var(--red);background:#FEF0ED}
+.yn-row.revealed-correct{border-color:var(--teal);background:#F0FBF9}
+.yn-row.revealed-wrong{border-color:var(--red);background:#FEF4F2}
+.yn-feedback{font-size:11px;margin-top:4px;display:none}
+.yn-feedback.show{display:block}
+.yn-feedback.fb-correct{color:#0F6E56}
+.yn-feedback.fb-wrong{color:#993C1D}
+
+/* SORT */
+.sort-wrap{margin-bottom:1.5rem}
+.sort-pool{display:flex;flex-wrap:wrap;gap:8px;padding:1rem;background:var(--gray);border-radius:10px;margin-bottom:1rem;min-height:56px;transition:background .15s}
+.sort-pool.drag-over-zone{background:#E6F7F6}
+.sort-chip{padding:7px 13px;border-radius:20px;background:white;border:1px solid var(--border);font-size:12px;font-weight:600;cursor:grab;color:var(--text);transition:all .15s;user-select:none;display:inline-block}
+.sort-chip:hover{border-color:var(--dark)}
+.sort-chip.dragging{opacity:.35;cursor:grabbing}
+.sort-columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.sort-col{border:2px dashed var(--border);border-radius:10px;padding:12px;min-height:110px;transition:all .15s}
+.sort-col.drag-over-zone{background:#F0FBF9;border-color:var(--teal);border-style:solid}
+.sort-col-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center}
+.sort-col.formal .sort-col-header{color:var(--teal)}
+.sort-col.informal .sort-col-header{color:var(--blue)}
+.sort-col.development .sort-col-header{color:#BA7517}
+.sort-col.formal{border-color:#9FE1CB}
+.sort-col.informal{border-color:#B5D4F4}
+.sort-col.development{border-color:#FAC775}
+.sort-dropped{display:flex;flex-direction:column;gap:5px}
+.sort-dropped-chip{padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;cursor:grab;user-select:none;transition:opacity .15s}
+.sort-dropped-chip:hover{opacity:.7}
+.sort-dropped-chip.dragging{opacity:.35;cursor:grabbing}
+.sort-col.formal .sort-dropped-chip{background:#E1F5EE;color:#085041}
+.sort-col.informal .sort-dropped-chip{background:#E6F1FB;color:#0C447C}
+.sort-col.development .sort-dropped-chip{background:#FAEEDA;color:#633806}
+.sort-instruction{font-size:12px;color:var(--muted);margin-bottom:10px}
+
+.reveal{background:#F0FBF9;border-radius:0 10px 10px 0;border-left:3px solid var(--teal);padding:12px 16px;margin-bottom:1.5rem;font-size:13px;line-height:1.6;color:var(--dark);display:none}
+.reveal.show{display:block}
+.reveal-label{font-size:10px;font-weight:700;color:#0F6E56;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.btn-row{display:flex;gap:10px}
+.btn-submit{background:var(--red);color:white;border:none;padding:11px 28px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;transition:opacity .15s}
+.btn-submit:hover{opacity:.9}
+.btn-next{background:var(--gray);color:var(--text);border:1px solid var(--border);padding:11px 28px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:none;font-family:'Montserrat',sans-serif}
+.btn-next:hover{background:#ECECEA}
+
+/* STAMP OVERLAY */
+.stamp-overlay{position:absolute;inset:0;background:rgba(255,255,255,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .25s}
+.stamp-overlay.show{opacity:1;pointer-events:all}
+.stamp-big{width:100px;height:100px;border-radius:50%;border:5px solid var(--red);background:#FEF0ED;display:flex;align-items:center;justify-content:center;transform:scale(0) rotate(-15deg);transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
+.stamp-overlay.show .stamp-big{transform:scale(1) rotate(-8deg)}
+.stamp-big svg{width:50px;height:50px;color:var(--red)}
+.stamp-round-label{margin-top:1.25rem;font-size:14px;font-weight:700;color:var(--dark);opacity:0;transition:opacity .3s .35s}
+.stamp-overlay.show .stamp-round-label{opacity:1}
+.stamp-sub{font-size:12px;color:var(--muted);margin-top:4px;opacity:0;transition:opacity .3s .45s}
+.stamp-overlay.show .stamp-sub{opacity:1}
+
+/* FINAL */
+.final-screen{padding:2.5rem 1.5rem;text-align:center;display:none}
+.final-screen.show{display:block}
+.final-passport{width:80px;height:80px;background:var(--red);border-radius:12px;margin:0 auto 1.5rem;display:flex;align-items:center;justify-content:center}
+.final-passport svg{width:40px;height:40px}
+.final-title{font-size:22px;font-weight:800;color:var(--dark);margin-bottom:.75rem;line-height:1.3}
+.final-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:1.5rem;max-width:400px;margin-left:auto;margin-right:auto}
+.final-stamps{display:flex;gap:10px;justify-content:center;margin-bottom:1.5rem}
+.final-stamp{width:44px;height:44px;border-radius:50%;background:#FEF0ED;border:2px solid var(--red);display:flex;align-items:center;justify-content:center;color:var(--red)}
+.final-stamp svg{width:20px;height:20px}
+.final-tagline{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:1.5rem}
+.btn-review{background:white;color:var(--dark);border:1.5px solid var(--border);padding:11px 28px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif}
+.btn-review:hover{background:var(--gray)}
+
+/* REVIEW */
+.review-screen{padding:1.5rem;display:none}
+.review-screen.show{display:block}
+.review-title{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:1.25rem}
+.review-item{margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:0.5px solid var(--border)}
+.review-item:last-child{border-bottom:none}
+.review-round{font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.review-q{font-size:14px;font-weight:600;color:var(--dark);margin-bottom:6px;line-height:1.4}
+.review-a{font-size:13px;color:#0F6E56;background:#F0FBF9;border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 8px 8px 0;line-height:1.5}
+.btn-back{background:var(--gray);color:var(--text);border:1px solid var(--border);padding:10px 24px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;margin-top:1rem}
+.btn-back:hover{background:#ECECEA}
+
+/* INTRO */
+.intro-screen{padding:2rem 1.5rem;text-align:center}
+.intro-icon{width:64px;height:64px;background:var(--red);border-radius:12px;margin:0 auto 1.25rem;display:flex;align-items:center;justify-content:center}
+.intro-icon svg{width:32px;height:32px}
+.intro-label{font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.intro-title{font-size:22px;font-weight:800;color:var(--dark);margin-bottom:.75rem;line-height:1.3}
+.intro-sub{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:2rem;max-width:400px;margin-left:auto;margin-right:auto}
+.intro-rounds{display:flex;flex-direction:column;gap:8px;margin-bottom:2rem;text-align:left}
+.intro-round{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--gray);border-radius:8px;font-size:13px;color:var(--dark);font-weight:500}
+.intro-num{width:24px;height:24px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-start{background:var(--red);color:white;border:none;padding:13px 36px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif}
+.btn-start:hover{opacity:.9}
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <div class="top-bar"><div class="tb1"></div><div class="tb2"></div><div class="tb3"></div><div class="tb4"></div></div>
+  <div class="header">
+    <div class="logo"><div class="logo-sq"></div><div class="logo-text">ELCA</div></div>
+    <div class="stamps" id="stamps-header" style="display:none">
+      <div class="stamp" id="s1">1</div><div class="stamp" id="s2">2</div><div class="stamp" id="s3">3</div><div class="stamp" id="s4">4</div><div class="stamp" id="s5">5</div>
+    </div>
+  </div>
+
+  <div class="stamp-overlay" id="stamp-overlay">
+    <div class="stamp-big">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="stamp-round-label" id="stamp-label">Round 1 complete!</div>
+    <div class="stamp-sub">Passport stamped</div>
+  </div>
+
+  <div class="intro-screen" id="screen-intro">
+    <div class="intro-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M7 3v18M2 8h5M2 13h5M2 18h5"/></svg></div>
+    <div class="intro-label">— Knowledge check</div>
+    <div class="intro-title">Your L&D Passport</div>
+    <div class="intro-sub">Complete 5 quick rounds to officially embark on your learning journey at ELCA. No scores — just think, choose, and learn.</div>
+    <div class="intro-rounds">
+      <div class="intro-round"><div class="intro-num">1</div>Your annual training hours</div>
+      <div class="intro-round"><div class="intro-num">2</div>What counts toward 40hrs?</div>
+      <div class="intro-round"><div class="intro-num">3</div>Sort activities into pillars</div>
+      <div class="intro-round"><div class="intro-num">4</div>Logging your training</div>
+      <div class="intro-round"><div class="intro-num">5</div>Getting certified</div>
+    </div>
+    <button class="btn-start" onclick="startGame()">Start →</button>
+  </div>
+
+  <div class="content" id="screen-game" style="display:none">
+    <div class="passport-progress">
+      <div class="progress-label" id="progress-label">Round 1 of 5</div>
+      <div class="progress-dots">
+        <div class="progress-dot active" id="pd1"></div><div class="progress-dot" id="pd2"></div><div class="progress-dot" id="pd3"></div><div class="progress-dot" id="pd4"></div><div class="progress-dot" id="pd5"></div>
+      </div>
+    </div>
+    <div id="round-content"></div>
+  </div>
+
+  <div class="final-screen" id="screen-final">
+    <div class="final-passport"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V2h11"/><path d="m9 11 3 3L22 4"/></svg></div>
+    <div class="final-title">Your L&D Passport is stamped.</div>
+    <div class="final-sub">You're officially ready to learn at ELCA. You know your budget, your options, and exactly what to do when you're ready to grow.</div>
+    <div class="final-stamps">
+      <div class="final-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="final-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="final-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="final-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="final-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>
+    <div class="final-tagline">We make it work — ELCA</div>
+    <button class="btn-review" onclick="showReview()">Review answers →</button>
+  </div>
+
+  <div class="review-screen" id="screen-review">
+    <div class="review-title">Answer review</div>
+    <div class="review-item">
+      <div class="review-round">Round 1 — Your training budget</div>
+      <div class="review-q">How many training hours does ELCA sponsor per employee per year?</div>
+      <div class="review-a">40 hours per headcount per year. Total company-wide: 16,000 hours (~400 employees), planned and monitored by L&D.</div>
+    </div>
+    <div class="review-item">
+      <div class="review-round">Round 2 — What counts toward 40hrs?</div>
+      <div class="review-q">Which activities count toward your 40hr budget?</div>
+      <div class="review-a">Counts ✓: Internal Training, External Training, Self-training Roadmap, Online learning via 3rd party. Does NOT count ✗: Boost Up Programs (sponsored separately), Certifications.</div>
+    </div>
+    <div class="review-item">
+      <div class="review-round">Round 3 — Sort into pillars</div>
+      <div class="review-q">Which activity belongs in which pillar?</div>
+      <div class="review-a">Formal: Internal Training, External Training, Self-training Roadmap, Boost Up Programs. Informal: LinkedIn Learning, Pluralsight, GoFluent, Bookboon. Development: Certifications, Competitions, Expert Activities.</div>
+    </div>
+    <div class="review-item">
+      <div class="review-round">Round 4 — Logging your training</div>
+      <div class="review-q">You just completed an internal training. What should you do next?</div>
+      <div class="review-a">Log it in Vertec using code 2223-103-31. Every training must be logged with the correct Vertec code. Use the Confluence reference link if unsure.</div>
+    </div>
+    <div class="review-item">
+      <div class="review-round">Round 5 — Getting certified</div>
+      <div class="review-q">You want L&D to cover your certification fees. What's your first step?</div>
+      <div class="review-a">Register with XC and make sure your name is on the list BEFORE getting certified. Order: Register with XC → Get certified → Submit payment request + certification to L&D.</div>
+    </div>
+    <button class="btn-back" onclick="backToFinal()">← Back</button>
+  </div>
+
+  <div class="bottom-bar"><div class="tb1"></div><div class="tb2"></div><div class="tb3"></div><div class="tb4"></div></div>
+</div>
+
+<script>
+var currentRound=0,selectedOption=null,selectedCorrect=false;
+var dragIdx=null,dragFromPool=false;
+
+var ynActivities=[
+  {name:"Internal Training",counts:true},
+  {name:"External Training",counts:true},
+  {name:"Self-training Roadmap",counts:true},
+  {name:"Online learning via 3rd party",counts:true},
+  {name:"Boost Up Programs",counts:false},
+  {name:"Certifications",counts:false}
+];
+var ynAnswers={};
+
+var sortActivities=[
+  {name:"Internal Training",pillar:"formal"},
+  {name:"External Training",pillar:"formal"},
+  {name:"Self-training Roadmap",pillar:"formal"},
+  {name:"Boost Up Programs",pillar:"formal"},
+  {name:"LinkedIn Learning",pillar:"informal"},
+  {name:"Pluralsight",pillar:"informal"},
+  {name:"GoFluent",pillar:"informal"},
+  {name:"Bookboon",pillar:"informal"},
+  {name:"Certifications",pillar:"development"},
+  {name:"Competitions",pillar:"development"},
+  {name:"Expert Activities",pillar:"development"}
+];
+var sortPlaced={};
+
+function startGame(){
+  document.getElementById('screen-intro').style.display='none';
+  document.getElementById('screen-game').style.display='block';
+  document.getElementById('stamps-header').style.display='flex';
+  showRound(1);
+}
+
+function updateProgress(n){
+  document.getElementById('progress-label').textContent='Round '+n+' of 5';
+  for(var i=1;i<=5;i++){
+    var dot=document.getElementById('pd'+i);
+    dot.className='progress-dot';
+    if(i<n)dot.classList.add('done');
+    else if(i===n)dot.classList.add('active');
+    var st=document.getElementById('s'+i);
+    st.className='stamp';
+    if(i<n){st.classList.add('done');st.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';}
+    else if(i===n)st.classList.add('active');
+    else st.textContent=i;
+  }
+}
+
+function showStampThen(roundNum,callback){
+  var overlay=document.getElementById('stamp-overlay');
+  document.getElementById('stamp-label').textContent='Round '+roundNum+' complete!';
+  overlay.classList.add('show');
+  setTimeout(function(){overlay.classList.remove('show');setTimeout(callback,300);},1500);
+}
+
+function goNext(completed,next){
+  showStampThen(completed,function(){
+    if(next==='final')showFinal();
+    else showRound(next);
+  });
+}
+
+function showRound(n){
+  currentRound=n;
+  updateProgress(n);
+  selectedOption=null;selectedCorrect=false;
+  var c=document.getElementById('round-content');
+  if(n===1){
+    c.innerHTML=`
+      <div class="round-tag">— Round 1 · Your training budget</div>
+      <div class="question">How many training hours does ELCA sponsor per employee per year?</div>
+      <div class="options" id="opts">
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">A</div>20 hours</div>
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">B</div>30 hours</div>
+        <div class="option" onclick="pickOpt(this,true)"><div class="option-key">C</div>40 hours</div>
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">D</div>60 hours</div>
+      </div>
+      <div class="reveal" id="reveal"><div class="reveal-label">Good to know</div>ELCA sponsors 40 hours of training per employee per year — that's your personal learning budget. Total company-wide: 16,000 hours, planned and monitored by L&D.</div>
+      <div class="btn-row">
+        <button class="btn-submit" id="btn-sub" onclick="submitMC(1,2)">Submit</button>
+        <button class="btn-next" id="btn-nxt" onclick="goNext(1,2)">Next round →</button>
+      </div>`;
+  }
+  else if(n===2){ynAnswers={};renderYN2(c);}
+  else if(n===3){sortPlaced={};renderSort(c);}
+  else if(n===4){
+    c.innerHTML=`
+      <div class="round-tag">— Round 4 · Logging your training</div>
+      <div class="question">You just completed an internal training. What should you do next?</div>
+      <div class="options" id="opts">
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">A</div>Email your manager to inform them</div>
+        <div class="option" onclick="pickOpt(this,true)"><div class="option-key">B</div>Log it in Vertec using the correct code (2223-103-31)</div>
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">C</div>Nothing — L&D will track it automatically</div>
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">D</div>Add it to your LinkedIn profile</div>
+      </div>
+      <div class="reveal" id="reveal"><div class="reveal-label">Good to know</div>Every training must be logged in Vertec with the correct code. For internal training, that's <strong>2223-103-31</strong>. Not sure which code? The reference link is on your Confluence page.</div>
+      <div class="btn-row">
+        <button class="btn-submit" id="btn-sub" onclick="submitMC(4,5)">Submit</button>
+        <button class="btn-next" id="btn-nxt" onclick="goNext(4,5)">Next round →</button>
+      </div>`;
+  }
+  else if(n===5){
+    c.innerHTML=`
+      <div class="round-tag">— Round 5 · Getting certified</div>
+      <div class="question">You want L&D to cover your certification fees. What's your very first step?</div>
+      <div class="options" id="opts">
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">A</div>Submit a payment request to L&D</div>
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">B</div>Get certified first, then register</div>
+        <div class="option" onclick="pickOpt(this,true)"><div class="option-key">C</div>Register with XC — make sure your name is on the list</div>
+        <div class="option" onclick="pickOpt(this,false)"><div class="option-key">D</div>Contact GoFluent for support</div>
+      </div>
+      <div class="reveal" id="reveal"><div class="reveal-label">Important!</div>Your name MUST be on the XC list before you get certified — otherwise you cannot claim back the fees. Order: Register with XC → Get certified → Submit payment request + certification to L&D.</div>
+      <div class="btn-row">
+        <button class="btn-submit" id="btn-sub" onclick="submitMC(5,'final')">Submit</button>
+        <button class="btn-next" id="btn-nxt" onclick="goNext(5,'final')">Complete passport →</button>
+      </div>`;
+  }
+}
+
+function pickOpt(el,correct){
+  if(document.getElementById('reveal').classList.contains('show'))return;
+  document.querySelectorAll('#opts .option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');selectedOption=el;selectedCorrect=correct;
+}
+
+function submitMC(completed,next){
+  if(!selectedOption)return;
+  document.querySelectorAll('#opts .option').forEach(o=>o.style.pointerEvents='none');
+  selectedOption.classList.remove('selected');
+  selectedOption.classList.add(selectedCorrect?'correct':'wrong');
+  if(!selectedCorrect){
+    document.querySelectorAll('#opts .option').forEach(o=>{
+      if(o.getAttribute('onclick')&&o.getAttribute('onclick').includes(',true)'))o.classList.add('correct');
+    });
+  }
+  document.getElementById('reveal').classList.add('show');
+  document.getElementById('btn-sub').style.display='none';
+  document.getElementById('btn-nxt').style.display='block';
+}
+
+/* ROUND 2 - all 6 at once */
+function renderYN2(c){
+  var rows=ynActivities.map(function(item,i){
+    return `<div class="yn-row" id="ynrow-${i}">
+      <div>
+        <div class="yn-row-name">${item.name}</div>
+        <div class="yn-feedback" id="ynfb-${i}"></div>
+      </div>
+      <div class="yn-row-btns">
+        <button class="yn-pill yes-pill" id="ynyes-${i}" onclick="selectYN(${i},true)">Yes</button>
+        <button class="yn-pill no-pill" id="ynno-${i}" onclick="selectYN(${i},false)">No</button>
+      </div>
+    </div>`;
+  }).join('');
+  c.innerHTML=`
+    <div class="round-tag">— Round 2 · Counts toward 40hrs?</div>
+    <div class="question">Which activities count toward your 40-hour learning budget?</div>
+    <div class="yn-grid" id="yn-grid">${rows}</div>
+    <div class="reveal" id="reveal-yn"><div class="reveal-label">Summary</div>Counts ✓: Internal Training, External Training, Self-training Roadmap, Online learning via 3rd party. Does NOT count ✗: Boost Up Programs (sponsored separately) and Certifications.</div>
+    <div class="btn-row">
+      <button class="btn-submit" id="btn-yn-sub" onclick="submitYN2()">Submit</button>
+      <button class="btn-next" id="btn-yn-nxt" onclick="goNext(2,3)">Next round →</button>
+    </div>`;
+}
+
+function selectYN(i,answer){
+  if(document.getElementById('reveal-yn').classList.contains('show'))return;
+  ynAnswers[i]=answer;
+  var yesBtn=document.getElementById('ynyes-'+i);
+  var noBtn=document.getElementById('ynno-'+i);
+  yesBtn.className='yn-pill yes-pill'+(answer===true?' sel-yes':'');
+  noBtn.className='yn-pill no-pill'+(answer===false?' sel-no':'');
+}
+
+function submitYN2(){
+  var allAnswered=ynActivities.every(function(_,i){return ynAnswers[i]!==undefined;});
+  if(!allAnswered){
+    alert('Please answer all 6 activities before submitting.');
+    return;
+  }
+  ynActivities.forEach(function(item,i){
+    var answered=ynAnswers[i];
+    var correct=(answered===item.counts);
+    var row=document.getElementById('ynrow-'+i);
+    var fb=document.getElementById('ynfb-'+i);
+    var yesBtn=document.getElementById('ynyes-'+i);
+    var noBtn=document.getElementById('ynno-'+i);
+    yesBtn.style.pointerEvents='none';
+    noBtn.style.pointerEvents='none';
+    if(correct){
+      row.classList.add('revealed-correct');
+      fb.className='yn-feedback show fb-correct';
+      fb.textContent='Correct! '+(item.counts?'This counts toward your 40hrs.':'This does not count toward 40hrs.');
+    } else {
+      row.classList.add('revealed-wrong');
+      fb.className='yn-feedback show fb-wrong';
+      fb.textContent='Not quite. '+(item.counts?'This actually counts toward your 40hrs.':'This actually does NOT count toward your 40hrs.');
+      if(item.counts){yesBtn.className='yn-pill yes-pill sel-yes';}
+      else{noBtn.className='yn-pill no-pill sel-no';}
+    }
+  });
+  document.getElementById('reveal-yn').classList.add('show');
+  document.getElementById('btn-yn-sub').style.display='none';
+  document.getElementById('btn-yn-nxt').style.display='block';
+}
+
+/* ROUND 3 - drag and drop */
+function renderSort(c){
+  var poolHTML=sortActivities.map(function(a,i){
+    return '<div class="sort-chip" id="chip-'+i+'" draggable="true" data-idx="'+i+'">'+a.name+'</div>';
+  }).join('');
+  c.innerHTML=`
+    <div class="round-tag">— Round 3 · Sort into pillars</div>
+    <div class="question">Drag each activity into the correct learning pillar.</div>
+    <div class="sort-instruction">Drag from the pool into a pillar. Drag back to the pool to undo.</div>
+    <div class="sort-wrap">
+      <div class="sort-pool" id="sort-pool">${poolHTML}</div>
+      <div class="sort-columns">
+        <div class="sort-col formal" id="zone-formal"><div class="sort-col-header">Formal</div><div class="sort-dropped" id="col-formal"></div></div>
+        <div class="sort-col informal" id="zone-informal"><div class="sort-col-header">Informal</div><div class="sort-dropped" id="col-informal"></div></div>
+        <div class="sort-col development" id="zone-development"><div class="sort-col-header">Development</div><div class="sort-dropped" id="col-development"></div></div>
+      </div>
+    </div>
+    <div class="reveal" id="reveal-sort"></div>
+    <div class="btn-row">
+      <button class="btn-submit" id="btn-sort-sub" onclick="submitSort()">Check answers</button>
+      <button class="btn-next" id="btn-sort-nxt" onclick="goNext(3,4)">Next round →</button>
+    </div>`;
+  initDragDrop();
+}
+
+function initDragDrop(){
+  function makeChipDraggable(el){
+    el.addEventListener('dragstart',function(e){
+      dragIdx=parseInt(this.dataset.idx);
+      dragFromPool=!!document.getElementById('sort-pool').contains(this);
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',String(dragIdx));
+      var self=this;
+      setTimeout(function(){self.classList.add('dragging');},0);
+    });
+    el.addEventListener('dragend',function(){
+      this.classList.remove('dragging');
+    });
+  }
+
+  document.querySelectorAll('.sort-chip').forEach(makeChipDraggable);
+
+  function setupZone(zoneEl,pillar){
+    zoneEl.addEventListener('dragover',function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      zoneEl.classList.add('drag-over-zone');
+    });
+    zoneEl.addEventListener('dragleave',function(e){
+      if(!zoneEl.contains(e.relatedTarget))zoneEl.classList.remove('drag-over-zone');
+    });
+    zoneEl.addEventListener('drop',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      zoneEl.classList.remove('drag-over-zone');
+      var idx=parseInt(e.dataTransfer.getData('text/plain'));
+      if(isNaN(idx))return;
+      moveChip(idx,pillar);
+    });
+  }
+
+  setupZone(document.getElementById('sort-pool'),'pool');
+  setupZone(document.getElementById('zone-formal'),'formal');
+  setupZone(document.getElementById('zone-informal'),'informal');
+  setupZone(document.getElementById('zone-development'),'development');
+}
+
+function moveChip(idx,pillar){
+  var activity=sortActivities[idx];
+  var oldEl=document.querySelector('[data-idx="'+idx+'"]');
+  if(oldEl)oldEl.remove();
+  delete sortPlaced[idx];
+
+  if(pillar==='pool'){
+    var pool=document.getElementById('sort-pool');
+    var chip=document.createElement('div');
+    chip.className='sort-chip';
+    chip.setAttribute('draggable','true');
+    chip.dataset.idx=idx;
+    chip.textContent=activity.name;
+    chip.addEventListener('dragstart',function(e){
+      dragIdx=parseInt(this.dataset.idx);
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',String(dragIdx));
+      var self=this;setTimeout(function(){self.classList.add('dragging');},0);
+    });
+    chip.addEventListener('dragend',function(){this.classList.remove('dragging');});
+    pool.appendChild(chip);
+  } else {
+    sortPlaced[idx]=pillar;
+    var col=document.getElementById('col-'+pillar);
+    var dropped=document.createElement('div');
+    dropped.className='sort-dropped-chip';
+    dropped.setAttribute('draggable','true');
+    dropped.dataset.idx=idx;
+    dropped.textContent=activity.name;
+    dropped.addEventListener('dragstart',function(e){
+      dragIdx=parseInt(this.dataset.idx);
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',String(dragIdx));
+      var self=this;setTimeout(function(){self.classList.add('dragging');},0);
+    });
+    dropped.addEventListener('dragend',function(){this.classList.remove('dragging');});
+    col.appendChild(dropped);
+  }
+}
+
+function submitSort(){
+  var correct=0;
+  sortActivities.forEach(function(a,i){if(sortPlaced[i]===a.pillar)correct++;});
+  var rv=document.getElementById('reveal-sort');
+
+  var pillars=[
+    {key:'formal',label:'Formal Trainings',color:'#00A89D',bg:'#E1F5EE',text:'#085041'},
+    {key:'informal',label:'Informal Learning',color:'#5BC4D8',bg:'#E6F1FB',text:'#0C447C'},
+    {key:'development',label:'Development',color:'#F5C842',bg:'#FAEEDA',text:'#633806'}
+  ];
+
+  var scoreMsg=correct===sortActivities.length
+    ?'<div style="font-size:13px;color:#0F6E56;font-weight:600;margin-bottom:12px;">Perfect! All '+correct+' sorted correctly.</div>'
+    :'<div style="font-size:13px;color:#993C1D;font-weight:600;margin-bottom:12px;">You got '+correct+' of '+sortActivities.length+' correct. Here\'s the correct answer:</div>';
+
+  var cols=pillars.map(function(p){
+    var items=sortActivities.map(function(a,i){
+      var placed=sortPlaced[i]===p.key;
+      var correct=a.pillar===p.key;
+      if(!correct)return '';
+      var wasWrong=sortPlaced[i]!==p.key;
+      var dot=wasWrong
+        ?'<span style="color:#E8371B;font-size:11px;margin-right:4px;">✗</span>'
+        :'<span style="color:'+p.text+';font-size:11px;margin-right:4px;">✓</span>';
+      var rowStyle=wasWrong?'background:rgba(232,55,27,0.08);border-radius:4px;padding:3px 6px;':'padding:3px 6px;';
+      return '<div style="'+rowStyle+'font-size:11px;font-weight:600;color:'+(wasWrong?'#993C1D':p.text)+';display:flex;align-items:center;">'+dot+a.name+'</div>';
+    }).join('');
+    return '<div style="flex:1;border-radius:10px;padding:12px;background:'+p.bg+';border:1.5px solid '+p.color+';">'
+      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:'+p.color+';margin-bottom:8px;">'+p.label+'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:4px;">'+items+'</div>'
+      +'</div>';
+  }).join('');
+
+  rv.innerHTML='<div class="reveal-label">Answer key</div>'
+    +scoreMsg
+    +'<div style="display:flex;gap:8px;">'+cols+'</div>'
+    +'<div style="font-size:11px;color:#888;margin-top:8px;"><span style="color:#E8371B;">✗</span> = placed in wrong pillar</div>';
+
+  rv.classList.add('show');
+  document.getElementById('btn-sort-sub').style.display='none';
+  document.getElementById('btn-sort-nxt').style.display='block';
+}
+
+function showFinal(){
+  document.getElementById('screen-game').style.display='none';
+  document.getElementById('screen-final').style.display='block';
+  for(var i=1;i<=5;i++){
+    var st=document.getElementById('s'+i);
+    st.className='stamp done';
+    st.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  }
+}
+
+function showReview(){
+  document.getElementById('screen-final').style.display='none';
+  document.getElementById('screen-review').style.display='block';
+}
+
+function backToFinal(){
+  document.getElementById('screen-review').style.display='none';
+  document.getElementById('screen-final').style.display='block';
+}
+</script>
+</body>
+</html>
